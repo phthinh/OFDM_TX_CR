@@ -43,10 +43,12 @@ wire			datout_ack;
 
 reg [10:0]	dat_cnt;
 reg [12:0]	alloc_ptr;			// pointer of allocation vector
-reg [6:0]	pilot_cnt;
-reg			nul_insert_ena;		//inserting null symbol for guarding.
+//reg [6:0]	pilot_cnt;
+reg			nul_insert_ena;	//inserting null symbol for guarding.
 wire			pil_insert_ena;
 wire			car_unactive;
+wire			pil_N;				// insert negative pilot
+wire			pil_P;				// insert positive pilot
 wire [15:0] pil_Re;
 wire [1:0]	cur_carrier;
 wire 			sym_end;
@@ -103,25 +105,24 @@ begin
 end
 assign sym_end = (dat_cnt == 11'd2047);
 
-always@(posedge CLK_I)
-begin
-	if(RST_I)										pilot_cnt	<= 7'd0;			
-	else if(CYC_I & (~icyc[0]))				pilot_cnt	<= 7'd0;
-	else if(pil_insert_ena & (~out_halt))	pilot_cnt	<= pilot_cnt + 1'b1;
-end
+//always@(posedge CLK_I)
+//begin
+//	if(RST_I)										pilot_cnt	<= 7'd0;			
+//	else if(CYC_I & (~icyc[0]))				pilot_cnt	<= 7'd0;
+//	else if(pil_insert_ena & (~out_halt))	pilot_cnt	<= pilot_cnt + 1'b1;
+//end
 
-reg [14:0]	pil_seed;
-wire 			cur_pil;		//current pilot
+//reg [14:0]	pil_seed;
+//wire 			cur_pil;		//current pilot
+//always@(posedge CLK_I)
+//begin
+//	if(RST_I)								pil_seed	<= 15'b011011100010101;			
+//	else if(CYC_I & (~icyc[0]))		pil_seed	<= 15'b011011100010101;
+//	else if(pil_insert_ena & CYC_O)	pil_seed	<= {pil_seed[13:0],cur_pil};
+//end
+//assign cur_pil = pil_seed[14]^pil_seed[13];
 
 
-always@(posedge CLK_I)
-begin
-	if(RST_I)								pil_seed	<= 15'b011011100010101;			
-	else if(CYC_I & (~icyc[0]))		pil_seed	<= 15'b011011100010101;
-	else if(pil_insert_ena & CYC_O)	pil_seed	<= {pil_seed[13:0],cur_pil};
-end
-assign cur_pil = pil_seed[14]^pil_seed[13];
-assign pil_Re = (cur_pil)? P_P : P_N;
 
 always@(posedge CLK_I)
 begin
@@ -129,9 +130,11 @@ begin
 	else if(CYC_I & (~icyc[0]))					alloc_ptr	<= 13'd0;
 	else if(datout_ack &(~nul_insert_ena))		alloc_ptr	<= alloc_ptr + 1'b1;
 end
-
-assign pil_insert_ena = (alloc_vec[alloc_ptr] == 2'b01);
-assign car_unactive   = (alloc_vec[alloc_ptr] == 2'b00);
+assign pil_Re 				= (pil_P)? P_P : P_N;
+assign pil_P 				= (alloc_vec[alloc_ptr] == 2'b01);
+assign pil_N 				= (alloc_vec[alloc_ptr] == 2'b11);
+assign pil_insert_ena 	=  pil_P|pil_N;
+assign car_unactive   	= (alloc_vec[alloc_ptr] == 2'b00);
 
 
 always@(posedge CLK_I)

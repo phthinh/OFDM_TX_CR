@@ -27,7 +27,7 @@ fprintf(fid, '%d ', bit_symbols);
 fclose(fid);
 
 %write Preamble ===========================================================
-preamble_802_22;   
+preamble_CR;   
 %DL_preamble_nor = DL_preamble ./ max(abs(DL_preamble));
 DL_preamble_nor = [short_pre];
 
@@ -40,7 +40,7 @@ fid = fopen('../MY_SOURCES/Pre.txt', 'w');
 fprintf(fid, '%8x ', Pre);
 fclose(fid);
 
-pilots_802_22;
+pilots_CR;
 Pilot_seq = reshape(pils, 1, 28*240);
 Pilot_seq = (Pilot_seq(1:128)<0)*1;
 fid = fopen('../MY_SOURCES/Pilot_seq.txt', 'w');

@@ -18,3 +18,15 @@ for ii = 1:28,
     end
 end
 pils = pils.';
+
+for ii = 1:28,
+    pil_ptr = 1;
+    for jj = 1:2048,
+        if (Al_Vec(jj,ii) == 1)
+            if (pils(pil_ptr) == 0)
+                Al_Vec(jj,ii) = 3;
+            end
+            pil_ptr = pil_ptr +1;
+        end
+    end
+end
