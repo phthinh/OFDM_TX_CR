@@ -56,7 +56,7 @@ QPSK = 1- 2.*mod(bit_symbols,2) + 1i *(1- 2.*floor(bit_symbols/2));
 %insert subcarriers & pilots ==============================================
 % pilot ===================================================================
 pilots_CR;
-pils_mod = pils.*2-1;
+pils_mod = Pils_802_22.*2-1;
 symbol = zeros(NFFT,NS);
 
 for nn = 0: NLOP-1,

@@ -1,3 +1,4 @@
+% assuming NDS symbols per frame
 a   =[ 0  0  0  0    1  1  1  0    1  1  1  1    0  0  1  0    1  1  0  0  ... 
        1  0  0  1    0  0  0  0    0  0  1  0    0  0  1  0    0  1  1  0  ...
        0  0  1  0    1  1  1  0    1  0  1  1    0  1  1  0    0  0  0  0  ...
@@ -14,6 +15,13 @@ p_n =[ 1  1  1  1   -1 -1 -1  1   -1 -1 -1 -1    1  1 -1  1   -1 -1  1  1  ...
       -1  1 -1  1    1 -1  1 -1    1  1  1 -1   -1  1 -1 -1   -1  1  1  1  ...
       -1 -1 -1 -1   -1 -1 -1 ];
 
- P   =[1; -1; 1; 1];
+P   =[1; -1; 1; 1];
  
- pils= repmat(P,1,length(p_n)) .* repmat(p_n, length(P),1);
+Pils_802_11 = repmat(P,1,length(p_n)) .* repmat(p_n, length(P),1);
+Pils_802_11   = Pils_802_11(:,1:NDS);
+
+Al_vec_802_11 = 2*ones(NFFT_802_11, NDS);
+Al_vec_802_11(1,:) = zeros(1, NDS);
+Pil_pos_vec_802_11 = [7 21 43 57];
+Al_vec_802_11(1+Pil_pos_vec_802_11,:) = ones(4, NDS);
+Al_vec_802_11(28:38,:) = zeros(11, NDS);
