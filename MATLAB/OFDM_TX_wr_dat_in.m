@@ -4,7 +4,7 @@ close all
 %dur  = 3.2e-6;  
 NFRM = 3;           % number of frame
 NDS  = 2;           % Number of Data symbol per frame per standard
-NS   = NDS*NFRM;    % number of symbols per standard
+%NS   = NDS*NFRM;    % number of symbols
 
 NFFT_802_11 = 64;                   % Number of FFT points  IEEE-802-11
 NC_802_11   = 48;                   % Number of subcarriers IEEE-802-11
@@ -12,7 +12,7 @@ CP_802_11   = (1/4)*NFFT_802_11;    % cyclic prefix length  IEEE-802-11
 PRE_802_11  = 4;                    % preamble symbol = 1   IEEE-802-11
 
 
-NFFT_802_16 = 256                   % Number of FFT points  IEEE-802-16
+NFFT_802_16 = 256;                   % Number of FFT points  IEEE-802-16
 NC_802_16   = 192;                  % Number of subcarriers IEEE-802-16
 CP_802_16   = (1/8)*NFFT_802_16;    % cyclic prefix length  IEEE-802-16
 PRE_802_16  = 2;                    % preamble symbol = 1   IEEE-802-16
@@ -27,12 +27,13 @@ PRE_802_22  = 1;                    % preamble symbol = 1   IEEE-802-22
 
 
 % data in for TX ==========================================================
-bit_symbols = round(3*rand(1, NS*(NC_802_11 + NC_802_16 + NC_802_22)));
+bit_symbols = round(3*rand(1, NDS*(NC_802_11 + NC_802_16 + NC_802_22)));
 Len = [(NDS*NC_802_11) (NDS*NC_802_16) (NDS*NC_802_22)];
 
 %write data to file =======================================================
 fid = fopen('OFDM_TX_bit_symbols_Len.txt', 'w');
 fprintf(fid, '%d ', NFRM);
+fprintf(fid, '%d ', NDS);
 fprintf(fid, '%d ', Len);
 fclose(fid);
 

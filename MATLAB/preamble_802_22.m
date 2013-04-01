@@ -17,7 +17,7 @@ short_sym(1+k) = S488_bvec(1+((k-4)./4));
 short_sym(2048-843+k) = S277_bvec(1+((k-4)./4));  
 
 STS_802_22 = ifft(short_sym,NFFT_802_22);
-short_preamble_802_22 = [STS_802_22(NFFT_802_22-CP+1:NFFT_802_22); STS_802_22];
+short_preamble_802_22 = [STS_802_22(NFFT_802_22-CP_802_22+1:NFFT_802_22); STS_802_22];
 
 
 S536='F1C4677539900F45F5E42A3418663A12B8F6C1081350487D8D55D344BACF02CD9C9BCD68C4932A67D2AC0473878B1F970A2A938DF';
@@ -39,5 +39,5 @@ long_sym(1+k) = S536_bvec(1+((k-2)./2));
 long_sym(2048-841+k) = S115_bvec(1+((k-2)./2));  
 
 LTS_802_22 = ifft(long_sym,NFFT_802_22);
-long_preamble_8022_22 = [LTS_802_22(NFFT_802_22-CP+1:NFFT_802_22); LTS_802_22];
+long_preamble_8022_22 = [LTS_802_22(NFFT_802_22-CP_802_22+1:NFFT_802_22); LTS_802_22];
 pre_802_22 = short_preamble_802_22;
