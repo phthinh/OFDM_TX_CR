@@ -18,5 +18,5 @@ P_pattern=[ 1 2 2 2 2 2 2;...
             2 2 2 2 2 2 1;...
             2 2 1 2 2 2 2];
 
-Al_Vec = [zeros(28,1) repmat(P_pattern, 4,120) zeros(28,367) repmat(P_pattern,4,120)].';
-Al_vec_802_22 = Al_Vec(:,1:NDS);
+Al_vec = [zeros(28,1) repmat(P_pattern, 4,120) zeros(28,367) repmat(P_pattern,4,120)].';
+Al_vec_802_22 = Al_vec(:,1:NDS);

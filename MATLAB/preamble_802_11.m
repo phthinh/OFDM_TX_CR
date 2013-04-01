@@ -13,13 +13,15 @@ short_sym (53)= -1.472 - 1i*1.472;
 short_sym (57)= -1.472 - 1i*1.472;
 short_sym (61)=  1.472 + 1i*1.472;
 
-Tshort = ifft(short_sym,64);
-short_pre = [Tshort(49:64).' Tshort.' Tshort(49:64).' Tshort.'];
+STS_802_11 = ifft(short_sym,64);
+short_peamble_802_11 = [STS_802_11(49:64).' STS_802_11.' STS_802_11(49:64).' STS_802_11.'];
 %short_pre = short_pre ./ max(short_pre);
 long_sym = [0 1 -1 -1 1 1 -1 1 -1 1 -1 -1 -1 -1 -1  1  1 -1 -1  1 -1  1 -1 1 1 1 1 ...
             0 0  0  0 0 0  0 0  0 0  0 ... 
               1  1 -1 -1 1 1 -1 1 -1 1  1  1  1  1  1 -1 -1  1  1 -1  1 -1  1 1 1 1 ].'; 
 Tlong =  ifft(long_sym,64);
 
-long_pre = [Tlong(33:64).'  Tlong.' Tlong.'];
+long_preamble_802_11 = [Tlong(33:64).'  Tlong.' Tlong.'];
+
+pre_802_11 = [short_peamble_802_11 long_preamble_802_11];
 %long_pre = long_pre ./ max(long_pre);
