@@ -27,7 +27,9 @@ module IFFT_Mod(
 	output reg [31:0]	DAT_O,
 	output reg			CYC_O, STB_O,
 	output				WE_O,
-	input					ACK_I	
+	input					ACK_I,
+	
+	input [1:0]		STD		// style of standard 00:802.16; 01:802.16; 10:802.22	
     );
 reg [31:0]	idat;
 //reg [31:0]  odat;
@@ -38,6 +40,9 @@ wire			datout_ack;
 reg			process_done;	// assert when IFFT's procees has done and begin tranmitting data symbol.
 reg [11:0] 	d_cnt;			//delay counter to delay generating the preamble in order to wait for IFFT computation
 
+reg [11:0]  pre_delay;		// delay generate the preamble for ifft computing 
+reg [39:0]  config_dat;		// configuration data for ifft.
+reg 			config_tvalid;
 wire  		s_dat_val, s_dat_rdy;
 wire			m_dat_val, m_dat_rdy, m_dat_tlast;
 wire 	[7:0]	m_index;
@@ -69,9 +74,7 @@ end
 always @(posedge CLK_I)
 begin
 	if(RST_I)													CYC_O <= 1'b0;		
-	//else if(d_cnt == 6'd46)								CYC_O <= 1'b1;	
-	//else if(d_cnt == 6'd56)									CYC_O <= 1'b1;	
-	else if(d_cnt == 12'd1676)									CYC_O <= 1'b1;	
+	else if(d_cnt == pre_delay)							CYC_O <= 1'b1;	
 	else if((~CYC_I) &(~m_dat_val) &	process_done)	CYC_O <= 1'b0;
 end
 
@@ -79,10 +82,9 @@ always @(posedge CLK_I)
 begin
 	if(RST_I)										d_cnt <= 12'd0;		
 	else if(  CYC_I  &(~icyc))					d_cnt <= 12'd0;	
-	//else if(CYC_I &(~(d_cnt == 6'd47)))		d_cnt <= d_cnt + 1'd1;
-	//else if(CYC_I &(~(d_cnt == 6'd57)))		d_cnt <= d_cnt + 1'd1;
-	else if(CYC_I &(~(d_cnt == 12'd1677)))		d_cnt <= d_cnt + 1'd1;
+	else if(CYC_I &(~(d_cnt == 12'd1677)))	d_cnt <= d_cnt + 1'd1;
 end
+
 always @(posedge CLK_I)
 begin
 	if(RST_I)									process_done <= 1'b0;		
@@ -107,20 +109,63 @@ assign		aresetn 	= ~RST_I;
 assign   	s_dat_val	= ival & (~out_halt);
 assign		m_dat_rdy 	= ~out_halt;
 
+// [39 : 0] s_axis_config_tdata: [36:25] scale; [24]fwd_inv; [18:8]: cp_len; [4:0]:nfft
+// 802.11:
+// 	scale: shift right 6 bits :  1, 2, 3; 				inv = 0; cp_len = 1/4 (010 0000 0000); nfft = 64(0 0110) 
+// 	config_tdata = 0000 0000 0011 0110 0000 0000 0001 0000 0000 0110
+// 802.16:
+// 	scale: shift right 12 bits :  1, 2, 2, 3; 		inv = 0; cp_len = 1/8 (001 0000 0000); nfft = 256(0 1000)
+// 	config_tdata = 0000 0000 1101 0110 0000 0001 0000 0000 0000 1000
+// 802.22:
+// 	scale: shift right 12 bits :  1, 1, 2, 2, 2, 3; inv = 0; cp_len = 1/4(010 0000 0000); nfft = 2048(0 1011)
+// 	config_tdata = 0000 1011 0101 0110 0000 0010 0000 0000 0000 1011
+always@(*) begin
+	case (STD)
+		2'b00: begin
+						config_dat = 40'h0036020006;
+						pre_delay  = 12'd7;
+				end
+		2'b01: begin
+						config_dat = 40'h00D6010008;
+						pre_delay  = 12'd57;
+				end
+		2'b10: begin
+						config_dat = 40'h0B5602000B;
+						pre_delay  = 12'd1676;
+				end
+		2'b11: begin
+						config_dat = 40'd0;
+						pre_delay  = 12'd0;
+				end
+		default: begin
+						config_dat = 40'd0;
+						pre_delay  = 12'd0;
+				end
+	endcase
+end
+
+always @(posedge CLK_I)
+begin
+	if(RST_I)						config_tvalid <= 1'b0;		
+	else if(CYC_I&(~icyc))		config_tvalid <= 1'b1;	
+	else 								config_tvalid <= 1'b0;
+end
+
+wire [15:0] m_data_tuser;
+wire 			config_tready;
 IFFT IFFT_Ins(
 	.aclk(CLK_I), 											// input aclk
 	//.aclken(aclken), 									// input aclken
 	.aresetn(aresetn), 									// input aresetn
-	.s_axis_config_tdata(32'h0B560200),				// input [23 : 0] s_axis_config_tdata: [28:17] scale; [16]fwd_inv; [10:0]: cp_len
-																// scale: shift right 12 bits :  1, 1, 2, 2, 2, 3, inv = 0 
-																// config_tdata = 0000 1011 0101 0110 0000 0010 0000 0000
-	.s_axis_config_tvalid(1'b1), 						// input s_axis_config_tvalid
-	.s_axis_config_tready(), 							// ouput s_axis_config_tready
+	.s_axis_config_tdata(config_dat),				
+	.s_axis_config_tvalid(config_tvalid), 			// input s_axis_config_tvalid
+	.s_axis_config_tready(config_tready), 			// ouput s_axis_config_tready
 	.s_axis_data_tdata(idat), 							// input [31 : 0] s_axis_data_tdata
 	.s_axis_data_tvalid(s_dat_val),					// input s_axis_data_tvalid
 	.s_axis_data_tready(s_dat_rdy), 					// ouput s_axis_data_tready
 	.s_axis_data_tlast(1'b0), 							// input s_axis_data_tlast
 	.m_axis_data_tdata(fft_datout), 					// ouput [31 : 0] m_axis_data_tdata
+	.m_axis_data_tuser(m_data_tuser), 				// ouput [15 : 0] m_axis_data_tuser
 	.m_axis_data_tvalid(m_dat_val), 					// ouput m_axis_data_tvalid
 	.m_axis_data_tready(m_dat_rdy), 					// input m_axis_data_tready
 	.m_axis_data_tlast(m_dat_tlast),					// ouput m_axis_data_tlast

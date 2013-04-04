@@ -81,33 +81,6 @@ begin
 end
 
 assign WE_O = STB_O;
-
-/*
-always @* begin	
-	case(idat)
-		2'b11: begin
-				datout_Re  <= 16'h7FFF;
-				datout_Im  <= 16'h7FFF;
-				 end
-		2'b10: begin
-				datout_Re  <= 16'h8001;
-				datout_Im  <= 16'h7FFF;
-				 end
-		2'b01: begin
-				datout_Re  <= 16'h7FFF;
-				datout_Im  <= 16'h8001;
-				 end
-		2'b00: begin
-				datout_Re  <= 16'h8001;
-				datout_Im  <= 16'h8001;
-				 end
-		default: begin
-				datout_Re  <= 16'hxxxx;
-				datout_Im  <= 16'hxxxx;
-				 end
-		endcase
-end
-*/
 assign datout_Im = (idat[1])?16'h8001:16'h7FFF;
 assign datout_Re = (idat[0])?16'h8001:16'h7FFF;
 endmodule

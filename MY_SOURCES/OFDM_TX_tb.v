@@ -27,6 +27,7 @@ reg			 ack_i;
 wire 			 ack_o;
 wire 	[31:0] dat_out;
 wire			 we_o, stb_o, cyc_o;
+reg	[1:0]	 STD;
 
 OFDM_TX_CR UUT(
 	.CLK_I(clk), .RST_I(rst),
@@ -39,7 +40,9 @@ OFDM_TX_CR UUT(
 	.WE_O (we_o), 
 	.STB_O(stb_o),
 	.CYC_O(cyc_o),
-	.ACK_I(ack_i)	
+	.ACK_I(ack_i),
+
+	.STD(STD)
     );
 
 wire [31:0] QPSK_Mod_dat_out 	= UUT.QPSK_Mod_Ins.DAT_O;	
@@ -65,7 +68,7 @@ wire 			IFFT_Mod_ack_i		= UUT.IFFT_Mod_Ins.ACK_I;
 parameter    NSAM  = 5*1440;
 reg [1:0] 	 datin [NSAM - 1:0];
 integer 	ii, lop_cnt;
-integer  Len, NLOP, para_fin;
+integer  Len, NFRM, para_fin, nds, istd;
 
 
 initial 	begin
@@ -76,10 +79,13 @@ initial 	begin
 		cyc_i		= 1'b0;
 		ii 		= 0;
 		dat_in	= 2'd0;
+		//STD 		= istd;
 		
 		para_fin = $fopen("./MATLAB/OFDM_TX_bit_symbols_Len.txt","r");
+		$fscanf(para_fin, "%d ", NFRM);
+		$fscanf(para_fin, "%d ", nds);
+		$fscanf(para_fin, "%d ", STD);
 		$fscanf(para_fin, "%d ", Len);
-		$fscanf(para_fin, "%d ", NLOP);
 		$fclose(para_fin);
 
 		$readmemh("./MATLAB/OFDM_TX_bit_symbols.txt", datin);
@@ -101,7 +107,7 @@ initial 	begin
 	forever begin
 		@(posedge clk);
 				
-		if (~(lop_cnt == NLOP)) begin
+		if (~(lop_cnt == NFRM)) begin
 			ii=0;
 			wr_frm   = 1'b1;
 			dat_in 	<= datin[ii + lop_cnt*Len];			
@@ -269,7 +275,7 @@ initial  begin
 	//#30000	stop_chk = 1'b1;
 	forever begin
 		@(posedge clk);				
-		if (lop_cnt == NLOP) begin
+		if (lop_cnt == NFRM) begin
 			#100;
 			stop_chk = 1'b1;
 		end

@@ -1,8 +1,10 @@
+% this is used for test each standard
 clear all
 close all
 
 %dur  = 3.2e-6;  
-NFRM = 3;           % number of frame
+STD  = 1;
+NFRM = 1;           % number of frame
 NDS  = 2;           % Number of Data symbol per frame per standard
 %NS   = NDS*NFRM;    % number of symbols
 
@@ -27,13 +29,22 @@ PRE_802_22  = 1;                    % preamble symbol = 1   IEEE-802-22
 
 
 % data in for TX ==========================================================
-bit_symbols = round(3*rand(1, NDS*(NC_802_11 + NC_802_16 + NC_802_22)));
-Len = [(NDS*NC_802_11) (NDS*NC_802_16) (NDS*NC_802_22)];
+switch(STD)
+    case 0
+        NC = NC_802_11;
+    case 1
+        NC = NC_802_16;
+    case 2
+        NC = NC_802_22; 
+end
+bit_symbols = round(3*rand(1, NDS*(NC)));
+Len = NDS*NC;
 
 %write data to file =======================================================
 fid = fopen('OFDM_TX_bit_symbols_Len.txt', 'w');
 fprintf(fid, '%d ', NFRM);
-fprintf(fid, '%d ', DS);
+fprintf(fid, '%d ', NDS);
+fprintf(fid, '%d ', STD);
 fprintf(fid, '%d ', Len);
 fclose(fid);
 
@@ -72,8 +83,14 @@ fprintf(fid, '%8x ', Pre);
 fclose(fid);
 
 pilots_CR;
-alloc_vec = [Al_vec_802_11 Al_vec_802_16 Al_vec_802_22];
-
+switch(STD)
+    case 0
+        alloc_vec = Al_vec_802_11;
+    case 1
+        alloc_vec = Al_vec_802_16;
+    case 2
+        alloc_vec = Al_vec_802_22; 
+end
 fid = fopen('../MY_SOURCES/Al_vec.txt', 'w');
 fprintf(fid, '%d ', alloc_vec);
 fclose(fid);

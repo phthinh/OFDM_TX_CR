@@ -41,4 +41,4 @@ for ii = 1:NDS,
 end
 Al_vec_802_22 = reshape(Al_vec_802_22,1,NFFT_802_22*NDS);
 
-alloc_vec = [Al_vec_802_11 Al_vec_802_16 Al_vec_802_22];
+%alloc_vec = [Al_vec_802_11 Al_vec_802_16 Al_vec_802_22];

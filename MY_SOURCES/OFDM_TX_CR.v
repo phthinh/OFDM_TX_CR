@@ -27,8 +27,10 @@ module OFDM_TX_CR(
 	output [31:0]	DAT_O,
 	output			CYC_O, STB_O,
 	output			WE_O,
-	input				ACK_I	
-    );
+	input				ACK_I, 
+	
+	input	 [1:0]	STD	
+   );
 	 
 wire [31:0] QPSK_Mod_DAT_O;
 wire 			QPSK_Mod_WE_O; 
@@ -67,7 +69,9 @@ Pilots_Insert Pilots_Insert_Ins(
 	.WE_O (Pilots_Insert_WE_O ), 
 	.STB_O(Pilots_Insert_STB_O),
 	.CYC_O(Pilots_Insert_CYC_O),
-	.ACK_I(Pilots_Insert_ACK_I)	
+	.ACK_I(Pilots_Insert_ACK_I),
+
+	.STD(STD)
     );
 	 
 	 
@@ -88,7 +92,9 @@ IFFT_Mod 	IFFT_Mod_Ins(
 	.WE_O (IFFT_Mod_WE_O ), 
 	.STB_O(IFFT_Mod_STB_O),
 	.CYC_O(IFFT_Mod_CYC_O),
-	.ACK_I(IFFT_Mod_ACK_I)	
+	.ACK_I(IFFT_Mod_ACK_I),
+
+	.STD(STD)	
     );
 
 
@@ -109,7 +115,9 @@ Tx_Out 		Tx_Out_Ins(
 	.WE_O (Tx_Out_WE_O ), 
 	.STB_O(Tx_Out_STB_O),
 	.CYC_O(Tx_Out_CYC_O),
-	.ACK_I(Tx_Out_ACK_I)	
+	.ACK_I(Tx_Out_ACK_I),
+
+	.STD(STD)	
     );
 
 assign Tx_Out_ACK_I  = ACK_I;
