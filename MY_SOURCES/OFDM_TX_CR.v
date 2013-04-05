@@ -20,6 +20,12 @@
 //////////////////////////////////////////////////////////////////////////////////
 module OFDM_TX_CR(
 	input 			CLK_I, RST_I,
+	input	[31:0]	CFG_DAT_I,
+	input	[1:0]		CFG_ADR_I,
+	input				CFG_WE_I,
+	input				CFG_STB_I,
+	output			CFG_ACK_O,
+	
 	input [1:0] 	DAT_I,
 	input 			CYC_I, WE_I, STB_I, 
 	output			ACK_O,
@@ -27,10 +33,25 @@ module OFDM_TX_CR(
 	output [31:0]	DAT_O,
 	output			CYC_O, STB_O,
 	output			WE_O,
-	input				ACK_I, 
-	
-	input	 [1:0]	STD	
+	input				ACK_I	
    );
+
+wire [1:0] 		STD;
+wire [4095:0] 	ALLOC_VEC;
+wire				VEC_LD;	
+CR_Regs CR_Regs_ins(
+	.CLK_I(CLK_I), 
+	.RST_I(RST_I),
+	.DAT_I(CFG_DAT_I),
+	.ADR_I(CFG_ADR_I),
+	.WE_I (CFG_WE_I),
+	.STB_I(CFG_STB_I),
+	.ACK_O(CFG_ACK_O),
+	
+	.VEC_LD(VEC_LD),
+	.STD(STD),
+	.ALLOC_VEC(ALLOC_VEC)	
+    );
 	 
 wire [31:0] QPSK_Mod_DAT_O;
 wire 			QPSK_Mod_WE_O; 
@@ -71,7 +92,9 @@ Pilots_Insert Pilots_Insert_Ins(
 	.CYC_O(Pilots_Insert_CYC_O),
 	.ACK_I(Pilots_Insert_ACK_I),
 
-	.STD(STD)
+	.STD(STD),
+	.ALLOC_VEC(ALLOC_VEC),
+	.VEC_LD(VEC_LD)
     );
 	 
 	 

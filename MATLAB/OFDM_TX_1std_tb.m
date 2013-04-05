@@ -26,7 +26,7 @@ datin_fid = fopen('OFDM_TX_bit_symbols.txt', 'r');
 bit_symbols = fscanf(datin_fid, '%d ');
 fclose(datin_fid);
 
-datin_fid = fopen('../MY_SOURCES/Al_vec.txt', 'r');
+datin_fid = fopen('Al_vec.txt', 'r');
 alloc_vec = fscanf(datin_fid, '%d ');
 fclose(datin_fid);
 

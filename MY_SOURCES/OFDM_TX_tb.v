@@ -20,17 +20,30 @@
 //////////////////////////////////////////////////////////////////////////////////
 module OFDM_TX_tb(
     );
-reg 	rst, clk;
-reg 	we_i, stb_i, cyc_i;
-reg	[1:0] dat_in;
-reg			 ack_i;
-wire 			 ack_o;
-wire 	[31:0] dat_out;
-wire			 we_o, stb_o, cyc_o;
-reg	[1:0]	 STD;
+reg 				rst, clk;
+
+reg  [31:0] 	cfg_dat_i;
+reg	[1:0]	 	cfg_adr_i;
+reg				cfg_we_i, cfg_stb_i;
+wire				cfg_ack_o;
+				
+reg 				we_i, stb_i, cyc_i;
+reg	[1:0] 	dat_in;
+reg			 	ack_i;
+wire 			 	ack_o;
+wire 	[31:0] 	dat_out;
+wire			 	we_o, stb_o, cyc_o;
+reg	[1:0]	 	STD;
 
 OFDM_TX_CR UUT(
 	.CLK_I(clk), .RST_I(rst),
+	
+	.CFG_DAT_I(cfg_dat_i),
+	.CFG_ADR_I(cfg_adr_i),
+	.CFG_WE_I (cfg_we_i),
+	.CFG_STB_I(cfg_stb_i),
+	.CFG_ACK_O(cfg_ack_o),
+	
 	.DAT_I(dat_in),
 	.WE_I(we_i), 
 	.STB_I(stb_i),
@@ -40,9 +53,7 @@ OFDM_TX_CR UUT(
 	.WE_O (we_o), 
 	.STB_O(stb_o),
 	.CYC_O(cyc_o),
-	.ACK_I(ack_i),
-
-	.STD(STD)
+	.ACK_I(ack_i)
     );
 
 wire [31:0] QPSK_Mod_dat_out 	= UUT.QPSK_Mod_Ins.DAT_O;	
@@ -67,9 +78,11 @@ wire 			IFFT_Mod_ack_i		= UUT.IFFT_Mod_Ins.ACK_I;
 
 parameter    NSAM  = 5*1440;
 reg [1:0] 	 datin [NSAM - 1:0];
+reg [31:0]	 alloc_vec[0:511];
 integer 	ii, lop_cnt;
 integer  Len, NFRM, para_fin, nds, istd;
 
+integer 	alloc_len, alloc_cnt;		// length of allocation vector in word of 32 bits
 
 initial 	begin
 		rst 		= 1'b1;
@@ -79,7 +92,6 @@ initial 	begin
 		cyc_i		= 1'b0;
 		ii 		= 0;
 		dat_in	= 2'd0;
-		//STD 		= istd;
 		
 		para_fin = $fopen("./MATLAB/OFDM_TX_bit_symbols_Len.txt","r");
 		$fscanf(para_fin, "%d ", NFRM);
@@ -89,7 +101,15 @@ initial 	begin
 		$fclose(para_fin);
 
 		$readmemh("./MATLAB/OFDM_TX_bit_symbols.txt", datin);
-	
+		$readmemh("./MATLAB/RTL_Al_vec.txt", alloc_vec);
+		
+		case (STD)
+      2'b00  : alloc_len = 4*nds;
+      2'b01  : alloc_len = 16*nds;
+      2'b10  : alloc_len = 128*nds;
+      2'b11  : alloc_len = 0;
+      default: alloc_len = 0;
+		endcase
 	#25rst		= 1'b0;
 end
 
@@ -98,17 +118,37 @@ always #10 	clk 		= ~clk;
 reg wr_datin, wr_frm_pp;	
 
 reg 		wr_frm; 
+reg 		cfg_done;
 initial 	begin	
-	wr_frm   = 1'b0; 
-	wr_datin = 1'b1;
-	ack_i    = 1'b1;
-	lop_cnt  = 0;
+
+	cfg_dat_i	= 32'd0;
+	cfg_adr_i  	= 2'b00;
+	cfg_we_i		= 1'b1;
+	cfg_stb_i	= 1'b0;
+
+	wr_frm   	= 1'b0; 
+	wr_datin 	= 1'b1;
+	ack_i    	= 1'b1;
+	lop_cnt  	= 0;
+	alloc_cnt 	= 0;
+	cfg_done  	= 1'b0;
 	#600;
 	forever begin
 		@(posedge clk);
 				
 		if (~(lop_cnt == NFRM)) begin
 			ii=0;
+			
+			// configure the transmission in specified standard
+			cfg_dat_i = {30'd0, STD};
+			cfg_stb_i = 1'b1;
+			@(posedge clk);
+			cfg_dat_i = 32'd0;
+			cfg_stb_i = 1'b0;
+			alloc_cnt =0;
+			cfg_done  = 1'b1;
+			
+			#10000;		
 			wr_frm   = 1'b1;
 			dat_in 	<= datin[ii + lop_cnt*Len];			
 			@(negedge cyc_o);
@@ -118,6 +158,23 @@ initial 	begin
 	end
 end	
 
+initial begin
+	forever begin
+		@(posedge clk);
+		if (cfg_done & cfg_ack_o & (alloc_cnt == alloc_len)) begin
+				cfg_adr_i = 2'b00;			
+				cfg_dat_i = 32'd0;
+				cfg_stb_i = 1'b0;		
+			end
+		else if (cfg_done & cfg_ack_o &(alloc_cnt<alloc_len)) begin
+			cfg_adr_i = 2'b01;			
+			cfg_dat_i = alloc_vec[alloc_cnt];
+			cfg_stb_i = 1'b1;		
+			alloc_cnt = alloc_cnt + 1; 
+		
+		end 
+	end 
+end
 	
 always @(posedge clk) begin	
 	if(rst) 	begin

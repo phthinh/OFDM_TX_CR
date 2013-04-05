@@ -29,12 +29,14 @@ module Pilots_Insert(
 	output			WE_O,
 	input				ACK_I,
 
-	input [1:0]		STD		// style of standard 00:802.16; 01:802.16; 10:802.22
+	input [1:0]		STD,		// style of standard 00:802.16; 01:802.16; 10:802.22
+	input [4095:0] ALLOC_VEC,
+	output			VEC_LD
     );
 parameter P_P = 16'h7fff;	// +1 in Q1.15
 parameter P_N = 16'h8001;	// -1 in Q1.15 
-reg [1:0] alloc_vec 	 [0:4096];   // signed bit of real part of pilots,
-initial $readmemh("./MY_SOURCES/Al_vec.txt", alloc_vec);
+//reg [1:0] alloc_vec 	 [0:4096];   // signed bit of real part of pilots,
+//initial $readmemh("./MY_SOURCES/Al_vec.txt", alloc_vec);
 
 reg  [31:0]	idat;
 wire [31:0]  odat;
@@ -44,7 +46,7 @@ wire			datout_ack;
 
 
 reg [10:0]	dat_cnt;
-reg [12:0]	alloc_ptr;			// pointer of allocation vector
+reg [10:0]	alloc_ptr;			// pointer of allocation vector
 wire			pil_insert_ena;
 wire			car_unactive;
 wire			pil_N;				// insert negative pilot
@@ -101,40 +103,54 @@ always@(posedge CLK_I)
 begin
 	if(RST_I)										dat_cnt	<= 11'd0;		
 	else if(CYC_I & (~icyc[0]))				dat_cnt	<= 11'd0;
+	else if(sym_end)								dat_cnt	<= 11'd0;
 	else if(datout_ack)						   dat_cnt	<= dat_cnt + 1'b1;
 end
 
+reg vec_nd;
 always@(*) begin
 	   case (STD)
       2'b00  : begin
-						sym_end = (dat_cnt[5:0] == 11'd63);
+						vec_nd = (dat_cnt[5:0] == 11'd62);
 					end
       2'b01  : begin
-						sym_end = (dat_cnt[7:0] == 11'd255);
+						vec_nd = (dat_cnt[7:0] == 11'd254);
 					end
       2'b10  : begin
-						sym_end = (dat_cnt == 11'd2047);
+						vec_nd = (dat_cnt == 11'd2046);
 					end
       2'b11  : begin
-						sym_end = 1'b0;
+						vec_nd = 1'b0;
 					end
       default: begin
-						sym_end = 1'b0;
+						vec_nd = 1'b0;
 					end
    endcase
 end
-
+assign VEC_LD = vec_nd|(CYC_I & (~icyc[0]));
 always@(posedge CLK_I)
 begin
-	if(RST_I)									alloc_ptr	<= 13'd0;		
-	else if(CYC_I & (~icyc[0]))			alloc_ptr	<= 13'd0;
-	else if(icyc[1] & (~CYC_O))			alloc_ptr	<= alloc_ptr + 1'b1;
-	else if(datout_ack)						alloc_ptr	<= alloc_ptr + 1'b1;
+	if(RST_I)		sym_end	<= 1'd0;		
+	else 				sym_end  <= vec_nd;	
 end
-assign pil_Re 				= (pil_P)? P_P : P_N;
-assign pil_P 				= (alloc_vec[alloc_ptr] == 2'b01);
-assign pil_N 				= (alloc_vec[alloc_ptr] == 2'b11);
-assign pil_insert_ena 	=  pil_P|pil_N;
-assign car_unactive   	= (alloc_vec[alloc_ptr] == 2'b00);
+//assign VEC_LD = vec_ld;
+
+reg [4095:0] alloc_reg;
+always@(posedge CLK_I)
+begin
+	if(RST_I)							alloc_reg	<= 11'd0;		
+	else if(CYC_I & (~icyc[0]))	alloc_reg	<= ALLOC_VEC;
+	else if(vec_nd)					alloc_reg	<= ALLOC_VEC;
+	else if(icyc[1] & (~CYC_O))	alloc_reg	<= {2'b00, alloc_reg[4095:2]};
+	else if(datout_ack)				alloc_reg	<=	{2'b00, alloc_reg[4095:2]};;
+end
+
+wire [1:0] 	cur_alloc;
+assign 		cur_alloc			= alloc_reg[1:0];
+assign 		pil_Re 				= (pil_P)? P_P : P_N;
+assign 		pil_P 				= (cur_alloc == 2'b01);
+assign 		pil_N 				= (cur_alloc == 2'b11);
+assign 		car_unactive   	= (cur_alloc == 2'b00);
+assign 		pil_insert_ena 	=  pil_P|pil_N;
 
 endmodule 
