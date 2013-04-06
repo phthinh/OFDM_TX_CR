@@ -65,9 +65,6 @@ fclose(datout_fid);
 IFFT_Mod_rtl = (IFFT_Mod_Re_rtl./2^15) + 1i*(IFFT_Mod_Im_rtl./2^15);
 
 % Simulate with data in ===================================================
-%bit_symbols_frm1 = bit_symbols(1:Len(1));
-%bit_symbols_frm2 = bit_symbols(Len(1) + (1:Len(2)));
-%bit_symbols_frm3 = bit_symbols(Len(1) +  Len(2)+ (1:Len(3)));
 %QPSK =====================================================================
 QPSK = 1- 2.*mod(bit_symbols,2) + 1i *(1- 2.*floor(bit_symbols/2));
 switch(STD)
@@ -136,10 +133,7 @@ switch(STD)
 end
 preamb = reshape(preamble_nor, (NFFT+CP), PRE);
 tx_out_frm(:,1:PRE)         = preamb(:,1:PRE);                  
-tx_out_frm(:,PRE+(1:NDS))   = tx_d_frm(:,1:NDS);            
-
-
-
+tx_out_frm(:,PRE+(1:NDS))   = tx_d_frm(:,1:NDS);
 
 Datout_sim = reshape(tx_out_frm, 1, (NFFT+CP)*(PRE + NDS));
 

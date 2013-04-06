@@ -117,6 +117,7 @@ for nn = 0:NDS-1,
         jj=jj+1;
     end
 end
+
 %alloc_vec = repmat(alloc_vec,1,NDS);
 fid = fopen('Al_vec.txt', 'w');
 fprintf(fid, '%d ', alloc_vec);
