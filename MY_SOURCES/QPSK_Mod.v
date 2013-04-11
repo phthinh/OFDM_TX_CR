@@ -81,6 +81,6 @@ begin
 end
 
 assign WE_O = STB_O;
-assign datout_Im = (idat[1])?16'h8001:16'h7FFF;
-assign datout_Re = (idat[0])?16'h8001:16'h7FFF;
+assign datout_Im = (idat[1])?16'hA57E:16'h5A82;
+assign datout_Re = (idat[0])?16'hA57E:16'h5A82;
 endmodule

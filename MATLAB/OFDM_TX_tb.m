@@ -101,6 +101,7 @@ for frm = 1:NFRM,
     bit_symbols(1:LEN) =[];
     
     QPSK = 1- 2.*mod(bit_symbol_frm,2) + 1i *(1- 2.*floor(bit_symbol_frm/2));
+    QPSK = (1/sqrt(2))*QPSK;
     QPSK_frm = reshape(QPSK, NC, NDS);
     
     %insert subcarriers & pilots ==============================================

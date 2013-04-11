@@ -15,6 +15,7 @@ short_sym = zeros(NFFT_802_22,1);
 k=(4:4:840);
 short_sym(1+k) = S488_bvec(1+((k-4)./4));  
 short_sym(2048-843+k) = S277_bvec(1+((k-4)./4));  
+short_sym = sqrt(1680/420)*short_sym; % multiply with normalized factor.
 
 STS_802_22 = ifft(short_sym,NFFT_802_22);
 short_preamble_802_22 = [STS_802_22(NFFT_802_22-CP_802_22+1:NFFT_802_22); STS_802_22];
@@ -37,6 +38,7 @@ long_sym = zeros(NFFT_802_22,1);
 k=(2:2:840);
 long_sym(1+k) = S536_bvec(1+((k-2)./2));  
 long_sym(2048-841+k) = S115_bvec(1+((k-2)./2));  
+long_sym = sqrt(1680/840)*long_sym; % multiply with normalized factor.
 
 LTS_802_22 = ifft(long_sym,NFFT_802_22);
 long_preamble_8022_22 = [LTS_802_22(NFFT_802_22-CP_802_22+1:NFFT_802_22); LTS_802_22];
