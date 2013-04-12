@@ -27,6 +27,7 @@ module CR_Regs(
 	
 	input					VEC_LD,
 	output [1:0]		STD,
+	output [1:0]		MOD,
 	output [4095:0]	ALLOC_VEC
     );
 
@@ -41,7 +42,7 @@ assign	 ctr_sel = (ADR_I == 2'b00);
 assign	 vec_sel = (ADR_I == 2'b01);
 assign	 vec_clr = (ADR_I == 2'b10);
 
-reg [1:0] 		STD;
+reg [1:0] 		MOD, STD;
 reg [4095:0]	ALLOC_VEC;
 reg [6:0] 		vec_cnt;
 reg				vec_full;
@@ -61,8 +62,8 @@ end
 
 always@(posedge CLK_I)
 begin
-	if(RST_I)							STD	<= 2'd0;		
-	else if(ctr_sel & wr_ena)		STD	<= DAT_I[1:0];
+	if(RST_I)							{MOD,STD}	<= 4'd0;		
+	else if(ctr_sel & wr_ena)		{MOD,STD}	<= DAT_I[3:0];
 end
 
 always@(*) 

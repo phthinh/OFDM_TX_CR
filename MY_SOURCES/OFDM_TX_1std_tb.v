@@ -18,7 +18,7 @@
 // Additional Comments: 
 //
 //////////////////////////////////////////////////////////////////////////////////
-module OFDM_TX_tb(
+module OFDM_TX_1std_tb(
     );
 reg 				rst, clk;
 
@@ -28,12 +28,14 @@ reg				cfg_we_i, cfg_stb_i;
 wire				cfg_ack_o;
 				
 reg 				we_i, stb_i, cyc_i;
-reg	[1:0] 	dat_in;
+reg	[5:0] 	dat_in;
 reg			 	ack_i;
 wire 			 	ack_o;
 wire 	[31:0] 	dat_out;
 wire			 	we_o, stb_o, cyc_o;
 reg	[1:0]	 	STD;
+reg	[1:0]	 	MOD;
+
 
 OFDM_TX_CR UUT(
 	.CLK_I(clk), .RST_I(rst),
@@ -56,11 +58,11 @@ OFDM_TX_CR UUT(
 	.ACK_I(ack_i)
     );
 
-wire [31:0] QPSK_Mod_dat_out 	= UUT.QPSK_Mod_Ins.DAT_O;	
-wire			QPSK_Mod_we_o		= UUT.QPSK_Mod_Ins.WE_O; 
-wire			QPSK_Mod_stb_o		= UUT.QPSK_Mod_Ins.STB_O; 
-wire			QPSK_Mod_cyc_o		= UUT.QPSK_Mod_Ins.CYC_O;
-wire 			QPSK_Mod_ack_o		= UUT.QPSK_Mod_Ins.ACK_O;
+wire [31:0] DAT_Mod_dat_out 	= UUT.DAT_Mod_Ins.DAT_O;	
+wire			DAT_Mod_we_o		= UUT.DAT_Mod_Ins.WE_O; 
+wire			DAT_Mod_stb_o		= UUT.DAT_Mod_Ins.STB_O; 
+wire			DAT_Mod_cyc_o		= UUT.DAT_Mod_Ins.CYC_O;
+wire 			DAT_Mod_ack_o		= UUT.DAT_Mod_Ins.ACK_O;
 
 wire [31:0] Pilots_Insert_dat_out	= UUT.Pilots_Insert_Ins.DAT_O;	
 wire			Pilots_Insert_we_o		= UUT.Pilots_Insert_Ins.WE_O; 
@@ -77,7 +79,7 @@ wire 			IFFT_Mod_ack_o		= UUT.IFFT_Mod_Ins.ACK_O;
 wire 			IFFT_Mod_ack_i		= UUT.IFFT_Mod_Ins.ACK_I;
 
 parameter    NSAM  = 5*1440;
-reg [1:0] 	 datin [NSAM - 1:0];
+reg [5:0] 	 datin [NSAM - 1:0];
 reg [31:0]	 alloc_vec[0:511];
 integer 	ii, lop_cnt;
 integer  Len, NFRM, para_fin, nds, istd;
@@ -91,16 +93,17 @@ initial 	begin
 		stb_i		= 1'b0;
 		cyc_i		= 1'b0;
 		ii 		= 0;
-		dat_in	= 2'd0;
+		dat_in	= 6'd0;
 		
 		para_fin = $fopen("./MATLAB/OFDM_TX_bit_symbols_Len.txt","r");
 		$fscanf(para_fin, "%d ", NFRM);
 		$fscanf(para_fin, "%d ", nds);
 		$fscanf(para_fin, "%d ", STD);
+		$fscanf(para_fin, "%d ", MOD);
 		$fscanf(para_fin, "%d ", Len);
 		$fclose(para_fin);
 
-		$readmemh("./MATLAB/OFDM_TX_bit_symbols.txt", datin);
+		$readmemh("./MATLAB/RTL_OFDM_TX_bit_symbols.txt", datin);
 		$readmemh("./MATLAB/RTL_Al_vec.txt", alloc_vec);
 		
 		case (STD)
@@ -140,7 +143,7 @@ initial 	begin
 			ii=0;
 			
 			// configure the transmission in specified standard
-			cfg_dat_i = {30'd0, STD};
+			cfg_dat_i = {28'd0, MOD, STD};
 			cfg_stb_i = 1'b1;
 			@(posedge clk);
 			cfg_dat_i = 32'd0;

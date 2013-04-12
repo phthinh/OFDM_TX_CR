@@ -3,7 +3,8 @@ clear all
 close all
 
 %dur  = 3.2e-6;  
-STD  = 2;
+STD  = 1;
+MOD  = 3;
 NFRM = 1;           % number of frame
 NDS  = 2;           % Number of Data symbol per frame per standard
 %NS   = NDS*NFRM;    % number of symbols
@@ -40,7 +41,14 @@ switch(STD)
         NC      = NC_802_22; 
         NFFT    = NFFT_802_22;
 end
-bit_symbols = round(3*rand(1, NDS*(NC)));
+
+switch(MOD)
+    case 1,     bit_symbols = round( 1*rand(1, NDS*(NC)));       
+    case 0,     bit_symbols = round( 3*rand(1, NDS*(NC)));  
+    case 2,     bit_symbols = round(15*rand(1, NDS*(NC))); 
+    case 3,     bit_symbols = round(63*rand(1, NDS*(NC)));        
+end
+%bit_symbols = round(3*rand(1, NDS*(NC)));
 Len = NDS*NC;
 
 %write data to file =======================================================
@@ -48,6 +56,7 @@ fid = fopen('OFDM_TX_bit_symbols_Len.txt', 'w');
 fprintf(fid, '%d ', NFRM);
 fprintf(fid, '%d ', NDS);
 fprintf(fid, '%d ', STD);
+fprintf(fid, '%d ', MOD);
 fprintf(fid, '%d ', Len);
 fclose(fid);
 
@@ -55,6 +64,9 @@ fid = fopen('OFDM_TX_bit_symbols.txt', 'w');
 fprintf(fid, '%d ', bit_symbols);
 fclose(fid);
 
+fid = fopen('RTL_OFDM_TX_bit_symbols.txt', 'w');
+fprintf(fid, '%x ', bit_symbols);
+fclose(fid);
 %write Preamble ===========================================================
 preamble_CR;   
 

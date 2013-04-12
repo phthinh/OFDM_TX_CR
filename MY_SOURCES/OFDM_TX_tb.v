@@ -28,7 +28,7 @@ reg				cfg_we_i, cfg_stb_i;
 wire				cfg_ack_o;
 				
 reg 				we_i, stb_i, cyc_i;
-reg	[1:0] 	dat_in;
+reg	[5:0] 	dat_in;
 reg			 	ack_i;
 wire 			 	ack_o;
 wire 	[31:0] 	dat_out;
@@ -55,11 +55,11 @@ OFDM_TX_CR UUT(
 	.ACK_I(ack_i)
     );
 
-wire [31:0] QPSK_Mod_dat_out 	= UUT.QPSK_Mod_Ins.DAT_O;	
-wire			QPSK_Mod_we_o		= UUT.QPSK_Mod_Ins.WE_O; 
-wire			QPSK_Mod_stb_o		= UUT.QPSK_Mod_Ins.STB_O; 
-wire			QPSK_Mod_cyc_o		= UUT.QPSK_Mod_Ins.CYC_O;
-wire 			QPSK_Mod_ack_o		= UUT.QPSK_Mod_Ins.ACK_O;
+wire [31:0] DAT_Mod_dat_out 	= UUT.DAT_Mod_Ins.DAT_O;	
+wire			DAT_Mod_we_o		= UUT.DAT_Mod_Ins.WE_O; 
+wire			DAT_Mod_stb_o		= UUT.DAT_Mod_Ins.STB_O; 
+wire			DAT_Mod_cyc_o		= UUT.DAT_Mod_Ins.CYC_O;
+wire 			DAT_Mod_ack_o		= UUT.DAT_Mod_Ins.ACK_O;
 
 wire [31:0] Pilots_Insert_dat_out	= UUT.Pilots_Insert_Ins.DAT_O;	
 wire			Pilots_Insert_we_o		= UUT.Pilots_Insert_Ins.WE_O; 
@@ -76,13 +76,14 @@ wire 			IFFT_Mod_ack_o		= UUT.IFFT_Mod_Ins.ACK_O;
 wire 			IFFT_Mod_ack_i		= UUT.IFFT_Mod_Ins.ACK_I;
 
 parameter    NSAM  = 5*1440;
-reg [1:0] 	 datin [NSAM - 1:0];
+reg [5:0] 	 datin [NSAM - 1:0];
 reg [31:0]	 alloc_vec[0:511];
 reg [31:0]	 config_dat;
 
 integer 	ii, dat_ptr, dat_off, lop_cnt;
-integer  STD, NDS, LEN, NFRM, para_fin;	// parameter of current frame;
+integer  STD, MOD, NDS, LEN, NFRM, para_fin;	// parameter of current frame;
 integer 	STD_vec [0:20];
+integer 	MOD_vec [0:20];
 integer  NDS_vec [0:20];
 integer  LEN_vec [0:20];
 
@@ -100,13 +101,16 @@ initial 	begin
 		we_i		= 1'b0;
 		stb_i		= 1'b0;
 		cyc_i		= 1'b0;
-		dat_in	= 2'd0;
+		dat_in	= 6'd0;
 		
 		para_fin = $fopen("./MATLAB/OFDM_TX_bit_symbols_Len.txt","r");
 			$fscanf(para_fin, "%d ", NFRM);
 		for (ii = 0; ii<NFRM; ii=ii+1) begin
 			$fscanf(para_fin, "%d ", STD_vec[ii]);
 		end
+		for (ii = 0; ii<NFRM; ii=ii+1) begin
+			$fscanf(para_fin, "%d ", MOD_vec[ii]);
+		end		
 		for (ii = 0; ii<NFRM; ii=ii+1) begin
 			$fscanf(para_fin, "%d ", NDS_vec[ii]);
 		end
@@ -117,7 +121,7 @@ initial 	begin
 			$fscanf(para_fin, "%d ", ALLOC_VEC_LEN[ii]);
 		$fclose(para_fin);
 
-		$readmemh("./MATLAB/OFDM_TX_bit_symbols.txt", datin);
+		$readmemh("./MATLAB/RTL_OFDM_TX_bit_symbols.txt", datin);
 		$readmemh("./MATLAB/RTL_Al_vec.txt", alloc_vec);		
 	
 	#25rst		= 1'b0;
@@ -152,6 +156,7 @@ initial 	begin
 			dat_ptr		=0;
 			alloc_ptr 	=0;
 			STD = STD_vec[lop_cnt];
+			MOD = MOD_vec[lop_cnt];
 			NDS = NDS_vec[lop_cnt];
 			LEN = LEN_vec[lop_cnt];
 			case (STD)
@@ -179,7 +184,13 @@ initial 	begin
 								config_dat = 32'd3;	
 							end
 			endcase
-		
+			case (MOD)
+				2'b00  	: config_dat[3:2]	= 2'b00;		
+				2'b01  	: config_dat[3:2]	= 2'b01;	
+				2'b10  	: config_dat[3:2] = 2'b10;								
+				2'b11  	: config_dat[3:2] = 2'b11;								
+			default		: config_dat[3:2]	= 2'b00;	
+			endcase
 			// configure the transmission in specified standard
 			cfg_dat_i = config_dat;
 			cfg_stb_i = 1'b1;

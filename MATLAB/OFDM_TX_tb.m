@@ -35,6 +35,8 @@ NFRM        = para(1);
 para(1)     =[];
 STD_vec     = para(1:NFRM);
 para(1:NFRM)=[];
+MOD_vec     = para(1:NFRM);
+para(1:NFRM)=[];
 NDS_vec     = para(1:NFRM);
 para(1:NFRM)=[];
 LEN_vec     = para(1:NFRM);
@@ -72,6 +74,7 @@ IFFT_Mod_sim        = [];
 Datout_sim          = [];
 for frm = 1:NFRM,
     STD = STD_vec(frm);
+    MOD = MOD_vec(frm);
     NDS = NDS_vec(frm);
     LEN = LEN_vec(frm);
     
@@ -96,14 +99,36 @@ for frm = 1:NFRM,
             preamble_nor    = pre_802_22; 
             PRE             = PRE_802_22;
     end
-    %QPSK =====================================================================
+    %Data modulation ======================================================
     bit_symbol_frm = bit_symbols(1:LEN);
     bit_symbols(1:LEN) =[];
     
-    QPSK = 1- 2.*mod(bit_symbol_frm,2) + 1i *(1- 2.*floor(bit_symbol_frm/2));
-    QPSK = (1/sqrt(2))*QPSK;
-    QPSK_frm = reshape(QPSK, NC, NDS);
-    
+    switch(MOD)
+        case 1  %BPSK 
+                BPSK = 2.*mod(bit_symbol_frm,2)-1;
+                dat_mod = BPSK;        
+        case 0  %QPSK 
+                QPSK = 2.*mod(bit_symbol_frm,2)-1 + 1i *(2.*floor(bit_symbol_frm/2)-1);
+                QPSK = QPSK *(1/sqrt(2));   
+                dat_mod = QPSK;  
+        case 2  %QAM16 
+                constel = [-3 -1 1 3] * sqrt(1/10);
+                reorder = [1 4 2 3];
+                I_cons  = mod(bit_symbol_frm,4);
+                Q_cons  = floor(bit_symbol_frm./4);
+                QAM16   = constel(reorder(1+I_cons)) + 1i* constel(reorder(1+Q_cons));     
+                dat_mod = QAM16;  
+        case 3  %QAM64 
+                constel = [-sqrt(42) -5 -3 -1 1 3 5 sqrt(42)] * sqrt(1/42);
+                reorder = [1 8 4 5 2 7 3 6];
+                I_cons  = mod(bit_symbol_frm,8);
+                Q_cons  = floor(bit_symbol_frm./8);
+                QAM64   = constel(reorder(1+I_cons)) + 1i* constel(reorder(1+Q_cons));    
+                dat_mod = QAM64;         
+    end
+
+    dat_mod_frm = reshape(dat_mod, NC, NDS);
+
     %insert subcarriers & pilots ==============================================
     % pilot ===================================================================
     alloc_vec_frm            = alloc_vec(1:(NFFT*NDS));
@@ -120,7 +145,7 @@ for frm = 1:NFRM,
             elseif (alloc_vec_frm(jj,ii) == 3),
                 symbol_frm(jj,ii) = -1;
             elseif(alloc_vec_frm(jj,ii) == 2),
-                symbol_frm(jj,ii) = QPSK_frm(dat_cnt,ii);
+                symbol_frm(jj,ii) = dat_mod_frm(dat_cnt,ii);
                 dat_cnt       = dat_cnt +1;
             end
         end

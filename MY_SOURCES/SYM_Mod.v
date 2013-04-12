@@ -74,7 +74,7 @@ always @(posedge CLK_I) begin
 end
 always @(posedge CLK_I) begin
 	if(RST_I) 							idat_Q16 <= 4'b0000;
-	else if(ACK_O & mod_q64_ena) 	idat_Q16 <= DAT_I[3:0];
+	else if(ACK_O & mod_q16_ena) 	idat_Q16 <= DAT_I[3:0];
 end
 always @(posedge CLK_I) begin
 	if(RST_I) 							idat_QPSK <= 2'b00;
@@ -124,63 +124,63 @@ reg [15:0] Q64_Im, Q16_Im;
 reg [15:0] Q64_Re, Q16_Re;
 always @(*) begin
 	case (idat_Q64[5:3])
-      3'b111 :	Q64_Im = `Q64n7;
-		3'b110 : Q64_Im = `Q64n5;
-		3'b100 :	Q64_Im = `Q64n3;
-		3'b101 : Q64_Im = `Q64n1;
-		3'b001 : Q64_Im = `Q64p1;
-		3'b000 : Q64_Im = `Q64p3;
-		3'b010 : Q64_Im = `Q64p5;
-		3'b011 : Q64_Im = `Q64p7;
+      3'b000 :	Q64_Im = `Q64n7;
+		3'b100 : Q64_Im = `Q64n5;
+		3'b110 :	Q64_Im = `Q64n3;
+		3'b010 : Q64_Im = `Q64n1;
+		3'b011 : Q64_Im = `Q64p1;
+		3'b111 : Q64_Im = `Q64p3;
+		3'b101 : Q64_Im = `Q64p5;
+		3'b001 : Q64_Im = `Q64p7;
 		default: Q64_Im = 16'd0;
 	endcase
 end
 always @(*) begin
 	case (idat_Q64[2:0])
-      3'b111 :	Q64_Re = `Q64n7;
-		3'b110 : Q64_Re = `Q64n5;
-		3'b100 :	Q64_Re = `Q64n3;
-		3'b101 : Q64_Re = `Q64n1;
-		3'b001 : Q64_Re = `Q64p1;
-		3'b000 : Q64_Re = `Q64p3;
-		3'b010 : Q64_Re = `Q64p5;
-		3'b011 : Q64_Re = `Q64p7;
+      3'b000 :	Q64_Re = `Q64n7;
+		3'b100 : Q64_Re = `Q64n5;
+		3'b110 :	Q64_Re = `Q64n3;
+		3'b010 : Q64_Re = `Q64n1;
+		3'b011 : Q64_Re = `Q64p1;
+		3'b111 : Q64_Re = `Q64p3;
+		3'b101 : Q64_Re = `Q64p5;
+		3'b001 : Q64_Re = `Q64p7;
 		default: Q64_Re = 16'd0;
 	endcase
 end
 
 always @(*) begin
 	case (idat_Q16[3:2])
-      2'b11  :	Q16_Im = `Q16n3;
+      2'b00  :	Q16_Im = `Q16n3;
 		2'b10  : Q16_Im = `Q16n1;
-		2'b00  : Q16_Im = `Q16p1;
+		2'b11  : Q16_Im = `Q16p1;
 		2'b01  : Q16_Im = `Q16p3;
 		default: Q16_Im = 16'd0;
 	endcase
 end
 always @(*) begin
 	case (idat_Q16[1:0])
-      2'b11  :	Q16_Re = `Q16n3;
+      2'b00  :	Q16_Re = `Q16n3;
 		2'b10  : Q16_Re = `Q16n1;
-		2'b00  : Q16_Re = `Q16p1;
+		2'b11  : Q16_Re = `Q16p1;
 		2'b01  : Q16_Re = `Q16p3;
 		default: Q16_Re = 16'd0;
 	endcase
 end
 
-wire [15:0] QPSK_Re;
-wire [15:0] QPSK_Im, BPSK_Im;
-assign QPSK_Im = (idat_QPSK[1])? QPSKn : QPSKp;
-assign QPSK_Re = (idat_QPSK[0])? QPSKn : QPSKp;
+wire [15:0] QPSK_Re, BPSK_Re;
+wire [15:0] QPSK_Im;
+assign QPSK_Im = (idat_QPSK[1])? `QPSKp : `QPSKn;
+assign QPSK_Re = (idat_QPSK[0])? `QPSKp : `QPSKn;
 
-assign BPSK_Im = (idat_BPSK[0])?16'h8001:16'h7FFF;
+assign BPSK_Re = (idat_BPSK)?16'h7FFF:16'h8001;
 
 always @(*) begin
 	case (MOD)
       2'b11  :	datout_Im = Q64_Im;
 		2'b10  : datout_Im = Q16_Im;
 		2'b00  : datout_Im = QPSK_Im;
-		2'b01  : datout_Im = BPSK_Im;
+		2'b01  : datout_Im = 16'd0;
 		default: datout_Im = 16'd0;
 	endcase
 end
@@ -190,7 +190,7 @@ always @(*) begin
       2'b11  :	datout_Re = Q64_Re;
 		2'b10  : datout_Re = Q16_Re;
 		2'b00  : datout_Re = QPSK_Re;
-		2'b01  : datout_Re = 16'd0;
+		2'b01  : datout_Re = BPSK_Re;
 		default: datout_Re = 16'd0;
 	endcase
 end

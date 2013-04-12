@@ -35,7 +35,8 @@ para = fscanf(datin_fid, '%d ');
 NFRM = para(1);
 NDS  = para(2);
 STD  = para(3);
-Len  = para(4:length(para));
+MOD  = para(4)
+Len  = para(5:length(para));
 
 fclose(datin_fid);
 
@@ -65,28 +66,53 @@ fclose(datout_fid);
 IFFT_Mod_rtl = (IFFT_Mod_Re_rtl./2^15) + 1i*(IFFT_Mod_Im_rtl./2^15);
 
 % Simulate with data in ===================================================
-%QPSK =====================================================================
-QPSK = 1- 2.*mod(bit_symbols,2) + 1i *(1- 2.*floor(bit_symbols/2));
 switch(STD)
     case 0
         NC = NC_802_11;
+        CP = CP_802_11;
+        NFFT = NFFT_802_11;
+        PRE = PRE_802_11;
     case 1
         NC = NC_802_16;
+        CP = CP_802_16;
+        NFFT = NFFT_802_16;
+        PRE = PRE_802_16;
     case 2
         NC = NC_802_22; 
+        CP = CP_802_22;
+        NFFT = NFFT_802_22;
+        PRE = PRE_802_22;
 end
-QPSK_frm = reshape(QPSK, NC, NDS);
+
+switch(MOD)
+    case 1  %BPSK 
+            BPSK = 2.*mod(bit_symbols,2)-1;
+            dat_mod = BPSK;        
+    case 0  %QPSK 
+            QPSK = 2.*mod(bit_symbols,2)-1 + 1i *(2.*floor(bit_symbols/2)-1);
+            QPSK = QPSK *(1/sqrt(2));   
+            dat_mod = QPSK;  
+    case 2  %QAM16 
+            constel = [-3 -1 1 3] * sqrt(1/10);
+            reorder = [1 4 2 3];
+            I_cons  = mod(bit_symbols,4);
+            Q_cons  = floor(bit_symbols./4);
+            QAM16   = constel(reorder(1+I_cons)) + 1i* constel(reorder(1+Q_cons));     
+            dat_mod = QAM16;  
+    case 3  %QAM64 
+            constel = [-sqrt(42) -5 -3 -1 1 3 5 sqrt(42)] * sqrt(1/42);
+            reorder = [1 8 4 5 2 7 3 6];
+            I_cons  = mod(bit_symbols,8);
+            Q_cons  = floor(bit_symbols./8);
+            QAM64   = constel(reorder(1+I_cons)) + 1i* constel(reorder(1+Q_cons));    
+            dat_mod = QAM64;         
+end
+
+dat_mod_frm = reshape(dat_mod, NC, NDS);
 %insert subcarriers & pilots ==============================================
 % pilot ===================================================================
 pilots_CR;
-switch(STD)
-    case 0
-        NFFT = NFFT_802_11;
-    case 1
-        NFFT = NFFT_802_16;
-    case 2
-        NFFT = NFFT_802_22; 
-end
+
 symbol_frm    = zeros(NFFT,NDS);
 alloc_vec_frm = reshape(alloc_vec(1:NDS*NFFT), NFFT,NDS);
 for ii = 1:NDS,
@@ -97,7 +123,7 @@ for ii = 1:NDS,
         elseif (alloc_vec_frm(jj,ii) == 3),
             symbol_frm(jj,ii) = -1;
         elseif(alloc_vec_frm(jj,ii) == 2),
-            symbol_frm(jj,ii) = QPSK_frm(dat_cnt,ii);
+            symbol_frm(jj,ii) = dat_mod_frm(dat_cnt,ii);
             dat_cnt       = dat_cnt +1;
         end
     end
@@ -107,14 +133,7 @@ Pilots_Insert_sim = reshape(symbol_frm, 1, NFFT*NDS) ;
 %IFFT =================================================================
 tx_d_frm =  ifft(symbol_frm, NFFT);
 %Add CP ===============================================================
-switch(STD)
-    case 0
-        CP = CP_802_11;
-    case 1
-        CP = CP_802_16;
-    case 2
-        CP = CP_802_22; 
-end
+
 tx_d_frm = [tx_d_frm(NFFT-CP+1: NFFT,:); tx_d_frm];
 
 IFFT_Mod_sim = reshape(tx_d_frm, 1, (NFFT+CP)*NDS);
@@ -122,14 +141,11 @@ IFFT_Mod_sim = reshape(tx_d_frm, 1, (NFFT+CP)*NDS);
 preamble_CR; 
 switch(STD)
     case 0
-        preamble_nor = pre_802_11; 
-        PRE = PRE_802_11;
+        preamble_nor = pre_802_11;        
     case 1
-        preamble_nor = pre_802_16; 
-        PRE = PRE_802_16;
+        preamble_nor = pre_802_16;        
     case 2
-        preamble_nor = pre_802_22; 
-        PRE = PRE_802_22;
+        preamble_nor = pre_802_22;         
 end
 preamb = reshape(preamble_nor, (NFFT+CP), PRE);
 tx_out_frm(:,1:PRE)         = preamb(:,1:PRE);                  

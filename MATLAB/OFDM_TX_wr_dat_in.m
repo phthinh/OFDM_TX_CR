@@ -3,6 +3,7 @@ close all
 
 %dur  = 3.2e-6;  
 STD_vec = [0  1 2 0];  % standard vector of transmited frames
+MOD_vec = [0  1 2 3];  % standard vector of data modulation
 NDS_vec = [16 4 2 4];  % number of symbols in each of transmited frames
 NFRM = length(STD_vec);           % number of frame
 
@@ -35,6 +36,7 @@ alloc_reg   = [];
 for frm = 1:NFRM,
     STD = STD_vec(frm);
     NDS = NDS_vec(frm);
+    MOD = MOD_vec(frm);
     switch(STD)
         case 0
             NC      = NC_802_11;
@@ -46,7 +48,17 @@ for frm = 1:NFRM,
             NC      = NC_802_22; 
             NFFT    = NFFT_802_22;
     end
-    bit_symbol_frm = round(3*rand(1, NDS*(NC)));
+    switch(MOD)
+        case 1
+            bit_symbol_frm = round(1*rand(1, NDS*(NC)));            
+        case 0
+            bit_symbol_frm = round(3*rand(1, NDS*(NC)));
+        case 2
+            bit_symbol_frm = round(15*rand(1, NDS*(NC)));
+        case 3
+            bit_symbol_frm = round(63*rand(1, NDS*(NC)));
+    end
+         
     LEN_vec(frm) = NDS*NC;
 
     pilots_CR;
@@ -90,6 +102,7 @@ end
 fid = fopen('OFDM_TX_bit_symbols_Len.txt', 'w');
 fprintf(fid, '%d ', NFRM);
 fprintf(fid, '%d ', STD_vec);
+fprintf(fid, '%d ', MOD_vec);
 fprintf(fid, '%d ', NDS_vec);
 fprintf(fid, '%d ', LEN_vec);
 fprintf(fid, '%d ', length(bit_symbols));
@@ -98,6 +111,10 @@ fclose(fid);
 
 fid = fopen('OFDM_TX_bit_symbols.txt', 'w');
 fprintf(fid, '%d ', bit_symbols);
+fclose(fid);
+
+fid = fopen('RTL_OFDM_TX_bit_symbols.txt', 'w');
+fprintf(fid, '%x ', bit_symbols);
 fclose(fid);
 
 fid = fopen('Al_vec.txt', 'w');
