@@ -34,7 +34,7 @@ datin_fid = fopen('OFDM_TX_bit_symbols_Len.txt', 'r');
 para = fscanf(datin_fid, '%d ');
 NFRM = para(1);
 NDS  = para(2);
-STD  = para(3);
+STD  = para(3)
 MOD  = para(4)
 Len  = para(5:length(para));
 
@@ -84,30 +84,55 @@ switch(STD)
         PRE = PRE_802_22;
 end
 
-switch(MOD)
-    case 1  %BPSK 
-            BPSK = 2.*mod(bit_symbols,2)-1;
-            dat_mod = BPSK;        
-    case 0  %QPSK 
-            QPSK = 2.*mod(bit_symbols,2)-1 + 1i *(2.*floor(bit_symbols/2)-1);
-            QPSK = QPSK *(1/sqrt(2));   
-            dat_mod = QPSK;  
-    case 2  %QAM16 
-            constel = [-3 -1 1 3] * sqrt(1/10);
-            reorder = [1 4 2 3];
-            I_cons  = mod(bit_symbols,4);
-            Q_cons  = floor(bit_symbols./4);
-            QAM16   = constel(reorder(1+I_cons)) + 1i* constel(reorder(1+Q_cons));     
-            dat_mod = QAM16;  
-    case 3  %QAM64 
-            constel = [-sqrt(42) -5 -3 -1 1 3 5 sqrt(42)] * sqrt(1/42);
-            reorder = [1 8 4 5 2 7 3 6];
-            I_cons  = mod(bit_symbols,8);
-            Q_cons  = floor(bit_symbols./8);
-            QAM64   = constel(reorder(1+I_cons)) + 1i* constel(reorder(1+Q_cons));    
-            dat_mod = QAM64;         
+if(STD == 1),
+    switch(MOD)
+        case 1  %BPSK 
+                BPSK = 1 - 2.*mod(bit_symbols,2);
+                dat_mod = BPSK;        
+        case 0  %QPSK 
+                QPSK = 1-2.*floor(bit_symbols/2) + 1i *(1-2.*mod(bit_symbols,2));
+                QPSK = QPSK *(1/sqrt(2));   
+                dat_mod = QPSK;  
+        case 2  %QAM16 
+                constel = [-3 -1 1 3] * sqrt(1/10);
+                reorder = [ 3  4 2 1];
+                Q_cons  = mod(bit_symbols,4);
+                I_cons  = floor(bit_symbols./4);
+                QAM16   = constel(reorder(1+I_cons)) + 1i* constel(reorder(1+Q_cons));     
+                dat_mod = QAM16;  
+        case 3  %QAM64 
+                constel = [-sqrt(42) -5 -3 -1 1 3 5 sqrt(42)] * sqrt(1/42);
+                reorder = [6 5 7 8 3 4 2 1];
+                Q_cons  = mod(bit_symbols,8);
+                I_cons  = floor(bit_symbols./8);
+                QAM64   = constel(reorder(1+I_cons)) + 1i* constel(reorder(1+Q_cons));    
+                dat_mod = QAM64;         
+    end
+else
+    switch(MOD)
+        case 1  %BPSK 
+                BPSK = 2.*mod(bit_symbols,2)-1;
+                dat_mod = BPSK;        
+        case 0  %QPSK 
+                QPSK = 2.*mod(bit_symbols,2)-1 + 1i *(2.*floor(bit_symbols/2)-1);
+                QPSK = QPSK *(1/sqrt(2));   
+                dat_mod = QPSK;  
+        case 2  %QAM16 
+                constel = [-3 -1 1 3] * sqrt(1/10);
+                reorder = [1 4 2 3];
+                I_cons  = mod(bit_symbols,4);
+                Q_cons  = floor(bit_symbols./4);
+                QAM16   = constel(reorder(1+I_cons)) + 1i* constel(reorder(1+Q_cons));     
+                dat_mod = QAM16;  
+        case 3  %QAM64 
+                constel = [-sqrt(42) -5 -3 -1 1 3 5 sqrt(42)] * sqrt(1/42);
+                reorder = [1 8 4 5 2 7 3 6];
+                I_cons  = mod(bit_symbols,8);
+                Q_cons  = floor(bit_symbols./8);
+                QAM64   = constel(reorder(1+I_cons)) + 1i* constel(reorder(1+Q_cons));    
+                dat_mod = QAM64;         
+    end
 end
-
 dat_mod_frm = reshape(dat_mod, NC, NDS);
 %insert subcarriers & pilots ==============================================
 % pilot ===================================================================

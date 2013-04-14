@@ -74,6 +74,7 @@ SYM_Mod DAT_Mod_Ins(
 	.CYC_O(DAT_Mod_CYC_O),
 	.ACK_I(DAT_Mod_ACK_I),
 
+	.STD(STD),
 	.MOD(MOD)
     );
 

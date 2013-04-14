@@ -2,7 +2,7 @@ clear all
 close all
 
 %dur  = 3.2e-6;  
-STD_vec = [0  1 2 0];  % standard vector of transmited frames
+STD_vec = [0  1 1 0];  % standard vector of transmited frames
 MOD_vec = [0  1 2 3];  % standard vector of data modulation
 NDS_vec = [16 4 2 4];  % number of symbols in each of transmited frames
 NFRM = length(STD_vec);           % number of frame

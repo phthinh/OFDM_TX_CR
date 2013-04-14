@@ -46,6 +46,7 @@ module SYM_Mod(
 	output				WE_O,
 	input					ACK_I,
 
+	input  [1:0]		STD,
 	input	 [1:0]		MOD
     );
 
@@ -67,22 +68,31 @@ wire 		mod_q64_ena 	= (MOD == 2'b11);
 wire 		mod_q16_ena 	= (MOD == 2'b10);
 wire 		mod_qpsk_ena 	= (MOD == 2'b00);
 wire 		mod_bpsk_ena 	= (MOD == 2'b01);
-	
+
+wire [5:0] datQ64_inv;
+wire [3:0] datQ16_inv;
+wire [1:0] datQPSK_inv;
+
+assign datQ64_inv = ~{DAT_I[0],DAT_I[1],DAT_I[2],DAT_I[3],DAT_I[4],DAT_I[5]};
+assign datQ16_inv = datQ64_inv[5:2];
+assign datQPSK_inv = datQ64_inv[5:4];	
+
+wire wmax_ena = (STD == 2'b01);
 always @(posedge CLK_I) begin
 	if(RST_I) 							idat_Q64 <= 6'b000000;
-	else if(ACK_O & mod_q64_ena) 	idat_Q64 <= DAT_I;
+	else if(ACK_O & mod_q64_ena) 	idat_Q64 <= (wmax_ena)?datQ64_inv:DAT_I;
 end
 always @(posedge CLK_I) begin
 	if(RST_I) 							idat_Q16 <= 4'b0000;
-	else if(ACK_O & mod_q16_ena) 	idat_Q16 <= DAT_I[3:0];
+	else if(ACK_O & mod_q16_ena) 	idat_Q16 <= (wmax_ena)?datQ16_inv:DAT_I[3:0];
 end
 always @(posedge CLK_I) begin
 	if(RST_I) 							idat_QPSK <= 2'b00;
-	else if(ACK_O & mod_qpsk_ena) idat_QPSK <= DAT_I[1:0];
+	else if(ACK_O & mod_qpsk_ena) idat_QPSK <= (wmax_ena)?datQPSK_inv:DAT_I[1:0];
 end
 always @(posedge CLK_I) begin
 	if(RST_I) 							idat_BPSK <= 1'b0;
-	else if(ACK_O & mod_bpsk_ena) idat_BPSK <= DAT_I[0];
+	else if(ACK_O & mod_bpsk_ena) idat_BPSK <= (wmax_ena)?(~DAT_I[0]):DAT_I[0];
 end
 
 always @(posedge CLK_I) begin

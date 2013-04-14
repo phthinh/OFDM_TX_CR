@@ -103,30 +103,56 @@ for frm = 1:NFRM,
     bit_symbol_frm = bit_symbols(1:LEN);
     bit_symbols(1:LEN) =[];
     
-    switch(MOD)
-        case 1  %BPSK 
-                BPSK = 2.*mod(bit_symbol_frm,2)-1;
-                dat_mod = BPSK;        
-        case 0  %QPSK 
-                QPSK = 2.*mod(bit_symbol_frm,2)-1 + 1i *(2.*floor(bit_symbol_frm/2)-1);
-                QPSK = QPSK *(1/sqrt(2));   
-                dat_mod = QPSK;  
-        case 2  %QAM16 
-                constel = [-3 -1 1 3] * sqrt(1/10);
-                reorder = [1 4 2 3];
-                I_cons  = mod(bit_symbol_frm,4);
-                Q_cons  = floor(bit_symbol_frm./4);
-                QAM16   = constel(reorder(1+I_cons)) + 1i* constel(reorder(1+Q_cons));     
-                dat_mod = QAM16;  
-        case 3  %QAM64 
-                constel = [-sqrt(42) -5 -3 -1 1 3 5 sqrt(42)] * sqrt(1/42);
-                reorder = [1 8 4 5 2 7 3 6];
-                I_cons  = mod(bit_symbol_frm,8);
-                Q_cons  = floor(bit_symbol_frm./8);
-                QAM64   = constel(reorder(1+I_cons)) + 1i* constel(reorder(1+Q_cons));    
-                dat_mod = QAM64;         
+    if(STD == 1),       % IEEE 802.16
+        switch(MOD)
+            case 1  %BPSK 
+                    BPSK = 1 - 2.*mod(bit_symbol_frm,2);
+                    dat_mod = BPSK;        
+            case 0  %QPSK 
+                    QPSK = 1-2.*floor(bit_symbol_frm/2) + 1i *(1-2.*mod(bit_symbol_frm,2));
+                    QPSK = QPSK *(1/sqrt(2));   
+                    dat_mod = QPSK;  
+            case 2  %QAM16 
+                    constel = [-3 -1 1 3] * sqrt(1/10);
+                    reorder = [ 3  4 2 1];
+                    Q_cons  = mod(bit_symbol_frm,4);
+                    I_cons  = floor(bit_symbol_frm./4);
+                    QAM16   = constel(reorder(1+I_cons)) + 1i* constel(reorder(1+Q_cons));     
+                    dat_mod = QAM16;  
+            case 3  %QAM64 
+                    constel = [-sqrt(42) -5 -3 -1 1 3 5 sqrt(42)] * sqrt(1/42);
+                    reorder = [6 5 7 8 3 4 2 1];
+                    Q_cons  = mod(bit_symbol_frm,8);
+                    I_cons  = floor(bit_symbol_frm./8);
+                    QAM64   = constel(reorder(1+I_cons)) + 1i* constel(reorder(1+Q_cons));    
+                    dat_mod = QAM64;         
+        end
+    else
+        switch(MOD)
+            case 1  %BPSK 
+                    BPSK = 2.*mod(bit_symbol_frm,2)-1;
+                    dat_mod = BPSK;        
+            case 0  %QPSK 
+                    QPSK = 2.*mod(bit_symbol_frm,2)-1 + 1i *(2.*floor(bit_symbol_frm/2)-1);
+                    QPSK = QPSK *(1/sqrt(2));   
+                    dat_mod = QPSK;  
+            case 2  %QAM16 
+                    constel = [-3 -1 1 3] * sqrt(1/10);
+                    reorder = [1 4 2 3];
+                    I_cons  = mod(bit_symbol_frm,4);
+                    Q_cons  = floor(bit_symbol_frm./4);
+                    QAM16   = constel(reorder(1+I_cons)) + 1i* constel(reorder(1+Q_cons));     
+                    dat_mod = QAM16;  
+            case 3  %QAM64 
+                    constel = [-sqrt(42) -5 -3 -1 1 3 5 sqrt(42)] * sqrt(1/42);
+                    reorder = [1 8 4 5 2 7 3 6];
+                    I_cons  = mod(bit_symbol_frm,8);
+                    Q_cons  = floor(bit_symbol_frm./8);
+                    QAM64   = constel(reorder(1+I_cons)) + 1i* constel(reorder(1+Q_cons));    
+                    dat_mod = QAM64;                        
+        end
     end
-
+    
     dat_mod_frm = reshape(dat_mod, NC, NDS);
 
     %insert subcarriers & pilots ==============================================
